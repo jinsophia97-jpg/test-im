@@ -58,17 +58,17 @@ im:
 # runtime forwarding the user's JWT (no shared key). The runtime's gateway auth
 # is auto-set to custom_jwt from this userpool. The callback is auto-registered
 # and OAUTH2_REDIRECT_URI auto-derived — you only declare the userpool here.
-# frontend:
-#   enabled: true
-#   # gateway is OPTIONAL. The frontend runs on a serverless APIG gateway; by
-#   # default an existing one is reused. If the account has none, deploy fails —
-#   # create a serverless gateway, or pin one here by name.
-#   # gateway: ${VEFAAS_SERVERLESS_GATEWAY}
-#   oauth2:
-#     # The client secret is fetched automatically from the userpool; declare only
-#     # the ids. To override, add: client_secret: ${USERPOOL_CLIENT_SECRET}
-#     user_pool_id: ${USERPOOL_ID}
-#     client_id: ${USERPOOL_CLIENT_ID}
+frontend:
+  enabled: true
+  # gateway is OPTIONAL. The frontend runs on a serverless APIG gateway; by
+  # default an existing one is reused. If the account has none, deploy fails —
+  # create a serverless gateway, or pin one here by name.
+  # gateway: ${VEFAAS_SERVERLESS_GATEWAY}
+  oauth2:
+    # The client secret is fetched automatically from the userpool; declare only
+    # the ids. To override, add: client_secret: ${USERPOOL_CLIENT_SECRET}
+    user_pool_id: ${USERPOOL_ID}
+    client_id: ${USERPOOL_CLIENT_ID}
 
 # ── Observability (optional) ─────────────────────────────
 # apmplus: true                # enable APMPlus monitoring

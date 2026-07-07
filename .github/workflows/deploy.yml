@@ -16,6 +16,8 @@ env:
   VOLCENGINE_REGION: ${{ vars.VOLCENGINE_REGION || 'cn-beijing' }}
   FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
   FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+  USERPOOL_ID: ${{ secrets.USERPOOL_ID }}
+  USERPOOL_CLIENT_ID: ${{ secrets.USERPOOL_CLIENT_ID }}
 
 jobs:
   deploy:
