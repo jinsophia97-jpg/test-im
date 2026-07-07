@@ -1,0 +1,88 @@
+# agentkit.yaml — AgentKit deploy configuration (fully yaml-driven).
+#
+# `agentkit deploy` reads everything from this file — no flags required.
+# Secrets are NOT written here in plaintext: reference the deploy environment
+# with ${VAR}. Forms: ${VAR} (required) · ${VAR:-default} · ${VAR:?message} ·
+# $$ for a literal $. Values are resolved by the CLI at deploy time.
+
+# ── Project ──────────────────────────────────────────────
+name: agentkit-arkclaw-assistant0
+region: cn-beijing              # cn-beijing | cn-shanghai
+project: default
+
+# ── Runtime resources ────────────────────────────────────
+runtime:
+  cpu_milli: 1000              # CPU in milli-cores (1000 = 1 vCPU)
+  memory_mb: 2048              # memory in MB
+  min_instance: 0              # 0 = scale to zero when idle
+  max_instance: 5
+  max_concurrency: 20          # concurrent requests per instance
+
+# ── Runtime environment variables (injected into the runtime) ────
+# Use ${VAR} for secrets — resolved from the deploy env, never committed here.
+# (This replaces the older AK_-prefix injection: declare each var explicitly.)
+envs:
+  # MODEL_AGENT_API_KEY: ${MODEL_AGENT_API_KEY:?set MODEL_AGENT_API_KEY in your env}
+  # LOG_LEVEL: ${LOG_LEVEL:-info}
+
+# ── Model / associated resources (optional) ──────────────
+# model_agent_name: doubao-seed-1-6-250615
+# knowledge_id: ${KNOWLEDGE_ID}
+# memory_id: ${MEMORY_ID}
+# tool_id: ${TOOL_ID}
+# mcp_toolset_id: ${MCP_TOOLSET_ID}
+
+# ── Gateway auth (optional; pick one type) ───────────────
+# When `frontend` (below) is enabled, this is derived automatically from its
+# userpool — you do NOT need to repeat it here.
+# auth:
+#   type: custom_jwt           # key_auth | custom_jwt
+#   # --- key_auth ---
+#   api_key_name: ""           # auto-created if omitted
+#   api_key_location: header   # header | query
+#   # --- custom_jwt ---
+#   discovery_url: ${USERPOOL_DISCOVERY_URL}
+#   allowed_clients:
+#     - ${USERPOOL_CLIENT_ID}
+
+# ── IM channels (optional) ───────────────────────────────
+# Deploys a bot proxy to VeFaaS after the runtime. Credentials via ${VAR}.
+im:
+  feishu:
+    enabled: true
+    app_id: ${FEISHU_APP_ID}
+    app_secret: ${FEISHU_APP_SECRET}
+
+# ── Frontend BFF (optional) ──────────────────────────────
+# Public VeFaaS front door: OAuth login at the edge, then reverse-proxy to the
+# runtime forwarding the user's JWT (no shared key). The runtime's gateway auth
+# is auto-set to custom_jwt from this userpool. The callback is auto-registered
+# and OAUTH2_REDIRECT_URI auto-derived — you only declare the userpool here.
+# frontend:
+#   enabled: true
+#   # gateway is OPTIONAL. The frontend runs on a serverless APIG gateway; by
+#   # default an existing one is reused. If the account has none, deploy fails —
+#   # create a serverless gateway, or pin one here by name.
+#   # gateway: ${VEFAAS_SERVERLESS_GATEWAY}
+#   oauth2:
+#     # The client secret is fetched automatically from the userpool; declare only
+#     # the ids. To override, add: client_secret: ${USERPOOL_CLIENT_SECRET}
+#     user_pool_id: ${USERPOOL_ID}
+#     client_id: ${USERPOOL_CLIENT_ID}
+
+# ── Observability (optional) ─────────────────────────────
+# apmplus: true                # enable APMPlus monitoring
+
+# ── Advanced (optional) ──────────────────────────────────
+# role_name: ""                # IAM role; auto-created when omitted
+
+# ── Infrastructure ───────────────────────────────────────
+# Where the image is built and stored. "Auto" = created & managed for you.
+infrastructure:
+  container_registry:          # Volcengine Container Registry (CR)
+    instance_name: Auto        # Auto → agentkit-platform-<account-id>
+    namespace_name: agentkit
+    repo_name: agentkit-arkclaw-assistant0         # defaults to the app name
+  tos:                         # TOS (build artifacts)
+    bucket_name: Auto          # Auto → agentkit-platform-<account-id>
+    object_prefix: agentkit-builds
