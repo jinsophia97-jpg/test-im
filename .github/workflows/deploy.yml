@@ -1,7 +1,8 @@
 # Continuous delivery: on every push to main, build the image in the cloud and
 # create/update the AgentKit runtime. Set these repo secrets first
 # (Settings -> Secrets and variables -> Actions):
-#   VOLCENGINE_ACCESS_KEY, VOLCENGINE_SECRET_KEY, USERPOOL_CLIENT_ID, USERPOOL_ID
+#   VOLCENGINE_ACCESS_KEY, VOLCENGINE_SECRET_KEY
+# The UserPool id and Web client id are non-secret and live in .agentkit/agentkit.yaml.
 # Optionally set the VOLCENGINE_REGION repo variable.
 name: deploy
 
@@ -18,8 +19,6 @@ env:
   VOLCENGINE_ACCESS_KEY: ${{ secrets.VOLCENGINE_ACCESS_KEY }}
   VOLCENGINE_SECRET_KEY: ${{ secrets.VOLCENGINE_SECRET_KEY }}
   VOLCENGINE_REGION: ${{ vars.VOLCENGINE_REGION || 'cn-beijing' }}
-  USERPOOL_CLIENT_ID: ${{ secrets.USERPOOL_CLIENT_ID }}
-  USERPOOL_ID: ${{ secrets.USERPOOL_ID }}
 
 jobs:
   deploy:

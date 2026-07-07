@@ -61,8 +61,8 @@ envs:
 frontend:
   enabled: true
   oauth2:
-    user_pool_id: ${USERPOOL_ID}
-    client_id: ${USERPOOL_CLIENT_ID}
+    user_pool_id: 1ce31f07-cd4a-4ecc-a54a-7dd543db2cfb
+    client_id: a970a77-9e1b-4df9-a86a-1486bbb4792f
 
 # ── Observability (optional) ─────────────────────────────
 # apmplus: true                # enable APMPlus monitoring
