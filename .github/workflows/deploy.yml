@@ -36,6 +36,26 @@ jobs:
         timeout-minutes: 60
         run: agentkit deploy
 
+      - name: Print AgentKit build logs on failure
+        if: failure()
+        run: |
+          echo "AgentKit artifact files:"
+          find .agentkit/artifacts -maxdepth 3 -type f -print || true
+
+          found=0
+          for log in .agentkit/artifacts/*/build.log; do
+            if [ -f "$log" ]; then
+              found=1
+              echo "::group::$log"
+              tail -n 500 "$log"
+              echo "::endgroup::"
+            fi
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "No AgentKit build.log found."
+          fi
+
       # Smoke test the deployed runtime (non-blocking).
       - name: Smoke test
         run: agentkit invoke agentkit-arkclaw-assistant0 -m "ping" --json || true
