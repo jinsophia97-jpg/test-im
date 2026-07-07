@@ -46,7 +46,20 @@ jobs:
       # Reads .agentkit/agentkit.yaml + Dockerfile and builds the image in AgentKit cloud.
       - name: AgentKit cloud build
         timeout-minutes: 60
-        run: agentkit deploy build
+        run: |
+          for attempt in 1 2 3; do
+            echo "AgentKit cloud build attempt ${attempt}/3"
+            if agentkit deploy build; then
+              exit 0
+            fi
+
+            status=$?
+            if [ "$attempt" -eq 3 ]; then
+              exit "$status"
+            fi
+
+            sleep $((attempt * 30))
+          done
 
       - name: Print AgentKit build logs on failure
         if: failure()
@@ -78,7 +91,20 @@ jobs:
       # Create/update runtime and frontend from the latest built artifact.
       - name: AgentKit deploy apply
         timeout-minutes: 30
-        run: agentkit deploy apply
+        run: |
+          for attempt in 1 2 3; do
+            echo "AgentKit deploy apply attempt ${attempt}/3"
+            if agentkit deploy apply; then
+              exit 0
+            fi
+
+            status=$?
+            if [ "$attempt" -eq 3 ]; then
+              exit "$status"
+            fi
+
+            sleep $((attempt * 30))
+          done
 
       # Smoke test the deployed runtime (non-blocking).
       - name: Smoke test
