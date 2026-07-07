@@ -31,30 +31,53 @@ jobs:
           wget -qO- https://agentkit-cli.tos-cn-beijing.volces.com/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # Reads .agentkit/agentkit.yaml + Dockerfile → cloud build → create/update runtime.
-      - name: Deploy
+      # Local CI preflight only; the real deployment still builds inside AgentKit.
+      - name: Docker build preflight
+        timeout-minutes: 25
+        continue-on-error: true
+        run: |
+          docker build \
+            --progress=plain \
+            --build-arg PYPI_INDEX_URL=https://pypi.org/simple/ \
+            --build-arg PYPI_EXTRA_INDEX_URL=https://mirrors.volces.com/pypi/simple/ \
+            -t agentkit-preflight .
+
+      # Reads .agentkit/agentkit.yaml + Dockerfile and builds the image in AgentKit cloud.
+      - name: AgentKit cloud build
         timeout-minutes: 60
-        run: agentkit deploy
+        run: agentkit deploy build
 
       - name: Print AgentKit build logs on failure
         if: failure()
         run: |
+          set +e
           echo "AgentKit artifact files:"
           find .agentkit/artifacts -maxdepth 3 -type f -print || true
 
           found=0
-          for log in .agentkit/artifacts/*/build.log; do
-            if [ -f "$log" ]; then
-              found=1
-              echo "::group::$log"
-              tail -n 500 "$log"
-              echo "::endgroup::"
-            fi
-          done
+          while IFS= read -r log; do
+            found=1
+            echo "----- BEGIN $log -----"
+            sed -n '1,1200p' "$log" || true
+            echo "----- END $log -----"
+          done < <(find .agentkit/artifacts -path '*/build.log' -type f 2>/dev/null)
 
           if [ "$found" -eq 0 ]; then
             echo "No AgentKit build.log found."
           fi
+
+      - name: Upload AgentKit artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentkit-artifacts
+          path: .agentkit/artifacts
+          if-no-files-found: ignore
+
+      # Create/update runtime, frontend, and enabled channels from the latest built artifact.
+      - name: AgentKit deploy apply
+        timeout-minutes: 30
+        run: agentkit deploy apply
 
       # Smoke test the deployed runtime (non-blocking).
       - name: Smoke test
