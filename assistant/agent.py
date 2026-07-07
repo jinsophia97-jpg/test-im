@@ -1,20 +1,10 @@
-"""Internal employee & IT service-desk agent — an enterprise demo.
+"""Internal employee and IT service-desk demo logic.
 
-Same shape as the basic template's agent (a plain module exposing `root_agent`,
-with no server/agentkit import, so the veADK Frontend can load it directly), but
-with tools closer to a real internal assistant: knowledge-base lookup, support
-ticket create/track, and leave-balance self-service.
-
-Every backend here is an in-memory mock — swap each function's body for calls to
-your real IT service desk / HR / ITSM systems (e.g. Jira, ServiceNow, an
-internal HR API). The tool signatures and docstrings are what the model reads,
-so keep those meaningful when you wire in the real thing.
+The functions are intentionally plain Python so the SSO frontend publish path
+does not pull in the full veADK / model dependency stack during image build.
 """
 
 from itertools import count
-
-from veadk import Agent
-
 
 # --- Mock backends (replace with your real systems) --------------------------
 
@@ -99,19 +89,58 @@ def check_leave_balance(employee_id: str) -> dict:
     return {"employee_id": employee_id.lower().strip(), "annual_leave_days": days}
 
 
-# `root_agent` is the name the veADK Frontend and the ADK server look for. The
-# agent name must be a valid identifier — it is also the ADK "app name".
-root_agent = Agent(
-    name="assistant",
-    description="企业内部员工助手:IT 服务台、工单与假期自助查询。",
-    instruction=(
-        "你是企业内部的员工助手,服务对象是公司员工。你能做三类事:检索内部 IT/HR 知识库、"
-        "创建与查询支持工单、查询年假余额。请始终用简体中文、专业而友好地回复。\n"
-        "工作原则:\n"
-        "1. 能用知识库直接解答的,先查知识库再回答;\n"
-        "2. 确需人工处理时才创建工单,且创建前先与用户确认关键信息(问题描述、类别、紧急程度);\n"
-        "3. 缺少必要参数(如工号、工单号)时先向用户询问,不要臆造;\n"
-        "4. 回复简洁、给出可执行的下一步。"
-    ),
-    tools=[search_knowledge_base, create_support_ticket, get_ticket_status, check_leave_balance],
-)
+def handle_message(message: str) -> str:
+    """Return a deterministic demo response for the frontend SSO flow."""
+    text = (message or "").strip()
+    lower = text.lower()
+
+    if not text:
+        return (
+            "你好,我是企业内部员工助手。你可以问我 VPN、报销、设备申领、"
+            "密码重置、权限、工单或年假余额。"
+        )
+
+    if "年假" in text or "leave" in lower:
+        employee_id = _find_employee_id(lower)
+        if not employee_id:
+            return "请告诉我你的员工 ID,例如 e1001,我就可以查询年假余额。"
+        result = check_leave_balance(employee_id)
+        days = result.get("annual_leave_days")
+        if days is None:
+            return result["result"]
+        return f"{employee_id} 当前剩余年假为 {days} 天。"
+
+    ticket_id = _find_ticket_id(text)
+    if ticket_id:
+        result = get_ticket_status(ticket_id)
+        if "result" in result:
+            return result["result"]
+        return f"{ticket_id} 当前状态是 {result['status']},主题:{result['subject']}。"
+
+    if "工单" in text and any(word in text for word in ("创建", "新建", "提交", "开")):
+        result = create_support_ticket(subject=text, category="IT", urgency="normal")
+        return result["message"]
+
+    for topic in _KNOWLEDGE_BASE:
+        if topic in lower or topic in text:
+            return search_knowledge_base(topic)["article"]
+
+    return (
+        "我可以协助处理 IT/HR 常见问题:VPN、报销、设备申领、密码重置、"
+        "权限申请、工单创建/查询、年假余额查询。请告诉我你想办理什么。"
+    )
+
+
+def _find_employee_id(text: str) -> str | None:
+    for employee_id in _LEAVE_BALANCE:
+        if employee_id in text:
+            return employee_id
+    return None
+
+
+def _find_ticket_id(text: str) -> str | None:
+    for part in text.replace(",", " ").replace("，", " ").split():
+        candidate = part.upper().strip("。.!?？")
+        if candidate.startswith("INC-"):
+            return candidate
+    return None

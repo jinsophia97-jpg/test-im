@@ -1,3 +1,3 @@
-from .agent import root_agent
+from .agent import handle_message
 
-__all__ = ["root_agent"]
+__all__ = ["handle_message"]

@@ -19,13 +19,12 @@ RUN python --version \
         --index "${PYPI_EXTRA_INDEX_URL}" \
         --index-strategy unsafe-best-match \
         --only-binary=:all: \
-        --no-binary=antlr4-python3-runtime \
         --no-binary=crcmod \
         --no-binary=tos \
         -r requirements.txt
 
 COPY . .
 
-# The runtime probes :8000 for readiness — the server must listen here.
+# The runtime probes :8000 for readiness; the server must listen here.
 EXPOSE 8000
 CMD ["python", "main.py"]

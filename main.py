@@ -1,28 +1,54 @@
-"""agentkit-arkclaw-assistant0 — a VeADK agent served as an AgentKit runtime.
+"""Lightweight AgentKit runtime for the SSO frontend demo.
 
-Served as the standard **ADK API server** via `AgentkitAgentServerApp`: it
-exposes `/list-apps`, `/run_sse` (streaming), `/run`, session and artifact
-management — the same API the AgentKit console and the Feishu proxy talk to.
-The process must listen on `0.0.0.0:8000` (the runtime probes that port).
-
-The agent itself lives in the `assistant` package (`assistant/agent.py`) so it
-can be reused: this module wires it into the API server, while the veADK
-Frontend (`veadk frontend`) discovers the same package directly.
+This project is intentionally using AgentkitSimpleApp instead of the full veADK
+agent server so the first SSO frontend deployment has a much smaller dependency
+tree and can clear the cloud image build step reliably.
 """
 
-from veadk.memory.short_term_memory import ShortTermMemory
-from agentkit.apps import AgentkitAgentServerApp
+from agentkit.apps import AgentkitSimpleApp
 
-from assistant import root_agent
+from assistant import handle_message
 
-# In-memory sessions. Swap the backend (sqlite / mysql / postgresql) for a
-# persistent store — see veadk.memory.short_term_memory.ShortTermMemory.
-short_term_memory = ShortTermMemory(backend="local")
 
-# The ADK API server. `app` is the ASGI app, so `uvicorn main:app` also works.
-server = AgentkitAgentServerApp(agent=root_agent, short_term_memory=short_term_memory)
-app = server.app
+app = AgentkitSimpleApp()
+
+
+@app.ping
+def ping() -> str:
+    return "ok"
+
+
+@app.entrypoint
+async def invoke(payload: dict) -> dict:
+    message = _extract_message(payload)
+    return {
+        "message": handle_message(message),
+        "input": message,
+        "runtime": "agentkit-simple-app",
+    }
+
+
+def _extract_message(payload: dict) -> str:
+    if not isinstance(payload, dict):
+        return str(payload or "")
+
+    message = payload.get("message")
+    if isinstance(message, str):
+        return message
+
+    messages = payload.get("messages")
+    if isinstance(messages, list) and messages:
+        last = messages[-1]
+        if isinstance(last, str):
+            return last
+        if isinstance(last, dict):
+            for key in ("content", "text", "message"):
+                value = last.get(key)
+                if isinstance(value, str):
+                    return value
+
+    return str(payload) if payload else ""
 
 
 if __name__ == "__main__":
-    server.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000)

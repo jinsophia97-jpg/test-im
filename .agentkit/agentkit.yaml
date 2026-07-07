@@ -46,12 +46,13 @@ envs:
 #     - ${USERPOOL_CLIENT_ID}
 
 # ── IM channels (optional) ───────────────────────────────
-# Deploys a bot proxy to VeFaaS after the runtime. Credentials via ${VAR}.
-im:
-  feishu:
-    enabled: true
-    app_id: ${FEISHU_APP_ID}
-    app_secret: ${FEISHU_APP_SECRET}
+# SSO frontend and Feishu bot are independent delivery channels. This project
+# follows the SSO frontend path, so keep Feishu disabled for this deploy.
+# im:
+#   feishu:
+#     enabled: true
+#     app_id: ${FEISHU_APP_ID}
+#     app_secret: ${FEISHU_APP_SECRET}
 
 # ── Frontend BFF (optional) ──────────────────────────────
 # Public VeFaaS front door: OAuth login at the edge, then reverse-proxy to the
