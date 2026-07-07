@@ -4,7 +4,7 @@
 # Volcengine-hosted image (which also ships `uv`).
 FROM agentkit-prod-public-cn-beijing.cr.volces.com/base/py-simple:python3.12-bookworm-slim-latest
 
-ENV UV_SYSTEM_PYTHON=1 UV_COMPILE_BYTECODE=1 PYTHONUNBUFFERED=1
+ENV UV_SYSTEM_PYTHON=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install dependencies first so this layer is cached across code changes.
