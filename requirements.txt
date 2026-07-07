@@ -1,27 +1,4 @@
-annotated-types==0.7.0
-    # via pydantic
-anyio==4.14.1
-    # via starlette
-click==8.4.2
-    # via uvicorn
-fastapi==0.115.14
-h11==0.16.0
-    # via uvicorn
-idna==3.18
-    # via anyio
-pydantic==2.13.4
-    # via fastapi
-pydantic-core==2.46.4
-    # via pydantic
-starlette==0.46.2
-    # via fastapi
-typing-extensions==4.16.0
-    # via
-    #   anyio
-    #   fastapi
-    #   pydantic
-    #   pydantic-core
-    #   typing-inspection
-typing-inspection==0.4.2
-    # via pydantic
-uvicorn==0.34.3
+# No extra runtime dependencies.
+#
+# The AgentKit Python base image already includes FastAPI and Uvicorn. Keeping
+# this file empty avoids slow package downloads in Volcengine CodePipeline.
