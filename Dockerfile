@@ -19,8 +19,6 @@ RUN python --version \
         --index "${PYPI_EXTRA_INDEX_URL}" \
         --index-strategy unsafe-best-match \
         --only-binary=:all: \
-        --no-binary=crcmod \
-        --no-binary=tos \
         -r requirements.txt
 
 COPY . .

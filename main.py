@@ -1,25 +1,39 @@
-"""Lightweight AgentKit runtime for the SSO frontend demo.
+"""Lightweight HTTP runtime for the AgentKit SSO frontend demo."""
 
-This project is intentionally using AgentkitSimpleApp instead of the full veADK
-agent server so the first SSO frontend deployment has a much smaller dependency
-tree and can clear the cloud image build step reliably.
-"""
+import time
 
-from agentkit.apps import AgentkitSimpleApp
+import uvicorn
+from fastapi import FastAPI, Request
 
 from assistant import handle_message
 
 
-app = AgentkitSimpleApp()
+app = FastAPI()
 
 
-@app.ping
-def ping() -> str:
-    return "ok"
+@app.get("/ping")
+def ping() -> dict:
+    return {"status": "ok"}
 
 
-@app.entrypoint
-async def invoke(payload: dict) -> dict:
+@app.get("/health")
+def health() -> dict:
+    return {"status": "healthy", "timestamp": time.time(), "service": "agent-service"}
+
+
+@app.get("/readiness")
+def readiness() -> dict:
+    return {"status": "success", "timestamp": time.time(), "service": "agent-service"}
+
+
+@app.get("/liveness")
+def liveness() -> dict:
+    return {"status": "success", "timestamp": time.time(), "service": "agent-service"}
+
+
+@app.post("/invoke")
+async def invoke(request: Request) -> dict:
+    payload = await request.json()
     message = _extract_message(payload)
     return {
         "message": handle_message(message),
@@ -51,4 +65,4 @@ def _extract_message(payload: dict) -> str:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
