@@ -1,5 +1,7 @@
 .git
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 *.pyc
@@ -7,3 +9,9 @@ __pycache__/
 Dockerfile
 .dockerignore
 README.md
+
+# Do not ship coding-agent skill packs or duplicated nested project into runtime image.
+.claude/
+.codex/
+.trae/
+agentkit-arkclaw-assistant0/

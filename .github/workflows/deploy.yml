@@ -33,6 +33,7 @@ jobs:
 
       # Reads .agentkit/agentkit.yaml + Dockerfile → cloud build → create/update runtime.
       - name: Deploy
+        timeout-minutes: 20
         run: agentkit deploy
 
       # Smoke test the deployed runtime (non-blocking).
