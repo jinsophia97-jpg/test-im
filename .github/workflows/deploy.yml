@@ -43,13 +43,14 @@ jobs:
             --build-arg PYPI_EXTRA_INDEX_URL=https://mirrors.volces.com/pypi/simple/ \
             -t agentkit-preflight .
 
-      # Reads .agentkit/agentkit.yaml + Dockerfile and builds the image in AgentKit cloud.
-      - name: AgentKit cloud build
-        timeout-minutes: 60
+      # Use the top-level deploy command so AgentKit runs the documented
+      # build -> runtime -> frontend flow and prints the frontend URL.
+      - name: AgentKit deploy
+        timeout-minutes: 90
         run: |
           for attempt in 1 2 3; do
-            echo "AgentKit cloud build attempt ${attempt}/3"
-            if agentkit deploy build; then
+            echo "AgentKit deploy attempt ${attempt}/3"
+            if agentkit deploy; then
               exit 0
             fi
 
@@ -87,24 +88,6 @@ jobs:
           name: agentkit-artifacts
           path: .agentkit/artifacts
           if-no-files-found: ignore
-
-      # Create/update runtime and frontend from the latest built artifact.
-      - name: AgentKit deploy apply
-        timeout-minutes: 30
-        run: |
-          for attempt in 1 2 3; do
-            echo "AgentKit deploy apply attempt ${attempt}/3"
-            if agentkit deploy apply; then
-              exit 0
-            fi
-
-            status=$?
-            if [ "$attempt" -eq 3 ]; then
-              exit "$status"
-            fi
-
-            sleep $((attempt * 30))
-          done
 
       # Smoke test the deployed runtime (non-blocking).
       - name: Smoke test
